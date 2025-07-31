@@ -179,22 +179,36 @@
         // Get URL parameters
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            return {
+            const params = {
                 content: urlParams.get('content'),
                 target_language: urlParams.get('lang') || urlParams.get('target_language')
             };
+            
+            // Debug logging
+            console.log('URL search params:', window.location.search);
+            console.log('Parsed params:', params);
+            
+            return params;
         }
 
         // Make the translation request
         async function translateContent() {
             const params = getUrlParams();
             
+            // Show what we found for debugging
+            console.log('Content found:', params.content);
+            console.log('Language found:', params.target_language);
+            
             if (!params.content || !params.target_language) {
+                console.log('Missing parameters - showing error');
                 showError('Missing required parameters. Please use a valid translation link.');
                 return;
             }
 
+            console.log('Parameters found, making translation request...');
+
             try {
+                console.log('Sending request to webhook...');
                 const response = await fetch('https://hook.us2.make.com/qvaf8eq4xeg7n1u79hq6cp9v8vgnihx4', {
                     method: 'POST',
                     headers: {
@@ -206,11 +220,14 @@
                     })
                 });
 
+                console.log('Response status:', response.status);
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const translatedText = await response.text();
+                console.log('Translation received:', translatedText.substring(0, 100) + '...');
                 showResult(translatedText);
                 
             } catch (error) {
