@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grant Card Translator - Granted Consulting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            margin: 0;
+            font-size: 2.2em;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+            margin: 10px 0 0 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result {
+            display: none;
+        }
+        
+        .translation-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+        
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+        
+        .success-message {
+            color: #38a169;
+            font-weight: bold;
+            margin: 10px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .success-message.show {
+            opacity: 1;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid #e53e3e;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Grant Card Translator</h1>
+            <p>Powered by Granted Consulting</p>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <h3>Translating your grant card...</h3>
+            <p>Please wait while we process your translation using DeepL with custom terminology.</p>
+        </div>
+        
+        <div id="result" class="result">
+            <h3>Translation Complete! ✅</h3>
+            
+            <div class="translation-box" id="translationText">
+                <!-- Translation will appear here -->
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="copy-btn" onclick="copyTranslation()">📋 Copy Translation</button>
+                <button class="copy-btn" onclick="downloadTranslation()">💾 Download as Text File</button>
+            </div>
+            
+            <div id="successMessage" class="success-message">
+                ✅ Translation copied to clipboard!
+            </div>
+            
+            <div class="back-link">
+                <p><a href="javascript:history.back()">← Back to CustomGPT Assistant</a></p>
+            </div>
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            <h3>❌ Translation Error</h3>
+            <p>There was an issue processing your translation. Please try again or contact support.</p>
+            <div class="back-link">
+                <a href="javascript:history.back()">← Back to try again</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                content: urlParams.get('content'),
+                target_language: urlParams.get('lang') || urlParams.get('target_language')
+            };
+        }
+
+        // Make the translation request
+        async function translateContent() {
+            const params = getUrlParams();
+            
+            if (!params.content || !params.target_language) {
+                showError('Missing required parameters. Please use a valid translation link.');
+                return;
+            }
+
+            try {
+                const response = await fetch('https://hook.us2.make.com/qvaf8eq4xeg7n1u79hq6cp9v8vgnihx4', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: decodeURIComponent(params.content),
+                        target_language: params.target_language
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const translatedText = await response.text();
+                showResult(translatedText);
+                
+            } catch (error) {
+                console.error('Translation error:', error);
+                showError('Failed to translate content. Please check your connection and try again.');
+            }
+        }
+
+        function showResult(translatedText) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('translationText').textContent = translatedText;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').innerHTML = `
+                <h3>❌ Translation Error</h3>
+                <p>${message}</p>
+                <div class="back-link">
+                    <a href="javascript:history.back()">← Back to try again</a>
+                </div>
+            `;
+        }
+
+        function copyTranslation() {
+            const translationText = document.getElementById('translationText').textContent;
+            navigator.clipboard.writeText(translationText).then(() => {
+                const successMsg = document.getElementById('successMessage');
+                successMsg.classList.add('show');
+                setTimeout(() => {
+                    successMsg.classList.remove('show');
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy to clipboard. Please select and copy manually.');
+            });
+        }
+
+        function downloadTranslation() {
+            const translationText = document.getElementById('translationText').textContent;
+            const blob = new Blob([translationText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'translated-grant-card.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Start translation when page loads
+        window.onload = function() {
+            translateContent();
+        };
+    </script>
+</body>
+</html>
